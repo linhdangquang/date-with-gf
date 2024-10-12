@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import {Inter} from "next/font/google";
 import "./globals.css";
+import PlayMusic from "./_components/play-music";
 
 const lato = Inter({
   subsets: ['latin', 'vietnamese'],
@@ -19,6 +20,7 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body className={`${lato.className}  antialiased`}>
+        <PlayMusic />
         {children}
       </body>
     </html>

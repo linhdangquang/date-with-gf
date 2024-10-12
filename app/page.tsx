@@ -13,6 +13,8 @@ export default function Home() {
   };
   return (
     <div className='px-2 flex flex-col gap-4 items-center justify-center min-h-screen py-2'>
+      {/* auto play audio */}
+     
       {!isYes ? (
         <>
           <TypewriterEffect
