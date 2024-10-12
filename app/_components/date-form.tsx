@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarIcon, Clock, Heart } from 'lucide-react';
+import { CalendarIcon, Clock, Heart, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,9 @@ import {
 } from '@/components/ui/select';
 import { saveDatingData } from '../actions';
 import { TypewriterEffect } from '@/components/typewriter-effect';
+import { Textarea } from '@/components/ui/textarea';
+import { PopoverClose } from '@radix-ui/react-popover';
+import { vi } from 'date-fns/locale';
 
 const activities = [
   { id: 'xem-phim', label: 'Xem phim' },
@@ -35,33 +38,37 @@ const activities = [
 const hours = Array.from({ length: 24 }, (_, i) => i);
 
 export default function DatingForm() {
-  const [date, setDate] = useState<Date>();
-  const [hour, setHour] = useState<string>();
-  const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
+  const [formData, setFormData] = useState({
+    date: undefined as Date | undefined,
+    hour: '',
+    selectedActivities: [] as string[],
+    desc: '',
+  });
+
   const [isSubmitCompleted, setIsSubmitCompleted] = useState(false);
   const handleActivityChange = (activityId: string) => {
-    setSelectedActivities((prev) =>
-      prev.includes(activityId)
-        ? prev.filter((id) => id !== activityId)
-        : [...prev, activityId]
-    );
+    setFormData((prev) => ({
+      ...prev,
+      selectedActivities: prev.selectedActivities.includes(activityId)
+        ? prev.selectedActivities.filter((id) => id !== activityId)
+        : [...prev.selectedActivities, activityId],
+    }));
+  };
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Selected activities:', selectedActivities);
-    console.log('Selected date:', date);
-    console.log('Selected hour:', hour);
-    // Here you can add logic to send the data to a server or perform other actions
     const res = await saveDatingData({
-      activities: selectedActivities,
-      date: date?.toISOString(),
-      hour: hour,
+      activities: formData.selectedActivities,
+      date: formData.date?.toISOString(),
+      hour: formData.hour,
+      desc: formData.desc,
     });
-    console.log('Submit result:', res);
     if (res) {
       alert('❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️');
-
       setIsSubmitCompleted(true);
     }
   };
@@ -139,7 +146,7 @@ export default function DatingForm() {
                 <div key={activity.id} className='flex items-center space-x-2'>
                   <Checkbox
                     id={activity.id}
-                    checked={selectedActivities.includes(activity.id)}
+                    checked={formData.selectedActivities.includes(activity.id)}
                     onCheckedChange={() => handleActivityChange(activity.id)}
                   />
                   <Label htmlFor={activity.id}>{activity.label}</Label>
@@ -159,34 +166,48 @@ export default function DatingForm() {
                     variant={'outline'}
                     className={cn(
                       'w-full sm:w-[240px] justify-start text-left font-normal',
-                      !date && 'text-muted-foreground'
+                      !formData.date && 'text-muted-foreground'
                     )}
                   >
                     <CalendarIcon className='mr-2 h-4 w-4' />
-                    {date ? format(date, 'PPP') : <span>Pick a date</span>}
+                    {formData.date ? (
+                      format(formData.date, 'PPP')
+                    ) : (
+                      <span>Chọn ngày</span>
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className='w-auto p-0'>
                   <Calendar
                     mode='single'
-                    selected={date}
-                    onSelect={setDate}
+                    locale={vi}
+                    selected={formData.date}
+                    onSelect={(date) => handleInputChange('date', date)}
                     initialFocus
                     required
                   />
+                  <PopoverClose asChild>
+                    <Button className='w-full'>
+                      Đóng
+                      <X className='h-4 w-4' />
+                    </Button>
+                  </PopoverClose>
                 </PopoverContent>
               </Popover>
 
-              <Select onValueChange={setHour} required>
+              <Select
+                onValueChange={(value) => handleInputChange('hour', value)}
+                required
+              >
                 <SelectTrigger className='w-full sm:w-[180px]'>
                   <SelectValue placeholder='Select hour'>
-                    {hour ? (
+                    {formData.hour ? (
                       <>
                         <Clock className='mr-2 h-4 w-4 inline' />
-                        {hour}:00
+                        {formData.hour}:00
                       </>
                     ) : (
-                      'Select hour'
+                      'Chọn giờ'
                     )}
                   </SelectValue>
                 </SelectTrigger>
@@ -201,8 +222,19 @@ export default function DatingForm() {
             </div>
           </div>
 
+          {/* add description */}
+          <div className='space-y-4'>
+            <Label className='text-base'>
+              Em muốn nhắn nhủ gì đến anh không?
+            </Label>
+            <Textarea
+              value={formData.desc}
+              onChange={(e) => handleInputChange('desc', e.target.value)}
+            />
+          </div>
+
           <Button type='submit' className='w-full'>
-            Submit
+            Gửi {' '}<Heart className='h-4 w-4 ml-2 inline' fill='currentColor' />
           </Button>
         </form>
       </motion.div>
